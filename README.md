@@ -1,5 +1,7 @@
 # Local Agent Monitor
 
+![Local Agent Monitor explainer](media/hero.png)
+
 Local Agent Monitor is a local-first VS Code sidebar for Claude Code background
 agent sessions.
 
