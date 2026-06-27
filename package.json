@@ -1,0 +1,141 @@
+{
+  "name": "local-agent-monitor",
+  "displayName": "Local Agent Monitor",
+  "description": "A local-first VS Code sidebar for Claude Code background agent sessions.",
+  "version": "0.1.0",
+  "publisher": "agentcontrol-labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gonta223/local-agent-monitor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/gonta223/local-agent-monitor/issues"
+  },
+  "homepage": "https://github.com/gonta223/local-agent-monitor#readme",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "claude",
+    "agents",
+    "local",
+    "monitor"
+  ],
+  "activationEvents": [
+    "onView:localAgentMonitor.sessions",
+    "onCommand:localAgentMonitor.refresh",
+    "onCommand:localAgentMonitor.openAgentView",
+    "onCommand:localAgentMonitor.resumeSession",
+    "onCommand:localAgentMonitor.copySessionId",
+    "onCommand:localAgentMonitor.openSessionFolder"
+  ],
+  "main": "./extension.js",
+  "icon": "media/icon.png",
+  "contributes": {
+    "configuration": {
+      "title": "Local Agent Monitor",
+      "properties": {
+        "localAgentMonitor.claudePath": {
+          "type": "string",
+          "default": "claude",
+          "description": "Path or command name for the Claude Code CLI."
+        },
+        "localAgentMonitor.showCompleted": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show completed sessions by using `claude agents --all --json`."
+        },
+        "localAgentMonitor.refreshIntervalMs": {
+          "type": "number",
+          "default": 10000,
+          "minimum": 0,
+          "description": "Auto-refresh interval in milliseconds. Set to 0 to disable."
+        },
+        "localAgentMonitor.resumeArgs": {
+          "type": "string",
+          "default": "",
+          "description": "Optional extra arguments appended when resuming a session. Leave empty for the safest default."
+        }
+      }
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "localAgentMonitor",
+          "title": "Agents",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "localAgentMonitor": [
+        {
+          "id": "localAgentMonitor.sessions",
+          "name": "Agent Sessions"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "localAgentMonitor.refresh",
+        "title": "Refresh Sessions",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "localAgentMonitor.openAgentView",
+        "title": "Open Claude Agent View",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "localAgentMonitor.resumeSession",
+        "title": "Resume Session",
+        "icon": "$(play)"
+      },
+      {
+        "command": "localAgentMonitor.copySessionId",
+        "title": "Copy Session ID",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "localAgentMonitor.openSessionFolder",
+        "title": "Open Session Folder",
+        "icon": "$(folder-opened)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "localAgentMonitor.refresh",
+          "when": "view == localAgentMonitor.sessions",
+          "group": "navigation@1"
+        },
+        {
+          "command": "localAgentMonitor.openAgentView",
+          "when": "view == localAgentMonitor.sessions",
+          "group": "navigation@2"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "localAgentMonitor.resumeSession",
+          "when": "view == localAgentMonitor.sessions && viewItem == agentSession",
+          "group": "inline@1"
+        },
+        {
+          "command": "localAgentMonitor.copySessionId",
+          "when": "view == localAgentMonitor.sessions && viewItem == agentSession",
+          "group": "navigation@1"
+        },
+        {
+          "command": "localAgentMonitor.openSessionFolder",
+          "when": "view == localAgentMonitor.sessions && viewItem == agentSession",
+          "group": "navigation@2"
+        }
+      ]
+    }
+  }
+}
