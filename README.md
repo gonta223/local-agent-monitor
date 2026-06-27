@@ -3,7 +3,10 @@
 ![Local Agent Monitor explainer](media/hero.png)
 
 Local Agent Monitor is a local-first VS Code sidebar for Claude Code background
-agent sessions.
+agent sessions. It helps you see which agents need input, which are working, and
+which have completed without leaving VS Code.
+
+[Download the latest VSIX](https://github.com/gonta223/local-agent-monitor/releases/latest)
 
 ## 日本語
 
@@ -13,19 +16,7 @@ VS Code のサイドバーで確認するためのローカルファーストな
 複数の agent を並行して動かしているときに、どのセッションが作業中か、
 入力待ちか、完了済みかを VS Code から素早く確認できます。
 
-この拡張機能は、ローカルの Claude Code CLI が返す次の出力を読み取ります。
-
-```bash
-claude agents --json
-```
-
-完了済みセッションの表示を有効にしている場合は、次の出力を読み取ります。
-
-```bash
-claude agents --all --json
-```
-
-### 主な機能
+### できること
 
 - VS Code のアクティビティバーに agent セッション一覧を表示
 - `Needs Input`、`Working`、`Other`、`Completed` に分類
@@ -34,6 +25,22 @@ claude agents --all --json
 - 選択したセッションを VS Code ターミナルで resume
 - セッションIDをコピー
 - セッションの作業フォルダを開く
+
+### 使い方
+
+1. [Releases](https://github.com/gonta223/local-agent-monitor/releases/latest) から `.vsix` ファイルをダウンロードします。
+2. VS Code の `Extensions: Install from VSIX...` を実行します。
+3. ダウンロードした `.vsix` を選択します。
+4. VS Code のアクティビティバーに表示される `Agents` ビューを開きます。
+
+### 必要なもの
+
+- VS Code 1.90.0 以上
+- Claude Code CLI
+- `claude` コマンドがPATHにあること
+
+`claude` コマンドが見つからない場合は、VS Code設定の
+`localAgentMonitor.claudePath` にClaude Code CLIのパスを指定してください。
 
 ### プライバシー
 
@@ -44,24 +51,14 @@ claude agents --all --json
 - プロジェクトファイルや Claude の会話ログ本文は読み取りません。
 - 設定された Claude Code CLI コマンドをローカルで実行するだけです。
 
-### 必要なもの
-
-- VS Code 1.90.0 以上
-- `claude` コマンドとして利用できる Claude Code CLI
-  - もしくは `localAgentMonitor.claudePath` でCLIパスを指定してください。
-
-### 使い方
-
-1. Releases から `.vsix` ファイルをダウンロードします。
-2. VS Code の `Extensions: Install from VSIX...` からインストールします。
-3. VS Code のアクティビティバーに表示される `Agents` ビューを開きます。
-
 ### 注意
 
 この拡張機能は Anthropic 公式の拡張機能ではありません。
 Claude Code CLI がローカルで利用できる環境向けの補助ツールです。
 
-It reads the local Claude Code CLI output from:
+## How It Works
+
+The extension shells out to the local Claude Code CLI and reads JSON output:
 
 ```bash
 claude agents --json
@@ -83,14 +80,12 @@ claude agents --all --json
 - Copy a session ID.
 - Open a session folder.
 
-## Privacy
+## Installation
 
-This extension is local-first.
-
-- It does not send session data to any external service.
-- It does not include telemetry.
-- It does not read project files or Claude transcript logs.
-- It only shells out to the configured Claude Code CLI command.
+1. Download the `.vsix` file from the [latest release](https://github.com/gonta223/local-agent-monitor/releases/latest).
+2. Run `Extensions: Install from VSIX...` in VS Code.
+3. Select the downloaded `.vsix` file.
+4. Open the `Agents` view from the Activity Bar.
 
 ## Requirements
 
@@ -107,6 +102,24 @@ This extension is local-first.
 
 The default resume command does not add permission bypass flags.
 
+## Privacy
+
+This extension is local-first.
+
+- It does not send session data to any external service.
+- It does not include telemetry.
+- It does not read project files or Claude transcript logs.
+- It only shells out to the configured Claude Code CLI command.
+
+See [PRIVACY.md](PRIVACY.md) for details.
+
+## Limitations
+
+- This is not an official Anthropic extension.
+- It does not embed the official Claude Agent View terminal UI.
+- It does not implement Claude Code approval prompts inside a custom webview.
+- It depends on the local Claude Code CLI output format.
+
 ## Local Development
 
 Open this folder in VS Code and run:
@@ -115,10 +128,14 @@ Open this folder in VS Code and run:
 code --extensionDevelopmentPath="$PWD"
 ```
 
-## Packaging
-
-Package a local VSIX with:
+Run local checks:
 
 ```bash
-npx @vscode/vsce package
+npm run check
+```
+
+Package a local VSIX:
+
+```bash
+npm run package
 ```

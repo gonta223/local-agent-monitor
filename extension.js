@@ -10,6 +10,7 @@ function activate(context) {
 
   context.subscriptions.push(
     output,
+    provider,
     vscode.window.registerTreeDataProvider("localAgentMonitor.sessions", provider),
     vscode.commands.registerCommand("localAgentMonitor.refresh", () => provider.refresh()),
     vscode.commands.registerCommand("localAgentMonitor.openAgentView", () => openAgentView()),
@@ -103,6 +104,14 @@ class SessionProvider {
 
     return this.items;
   }
+
+  dispose() {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = undefined;
+    }
+    this.emitter.dispose();
+  }
 }
 
 class MessageItem extends vscode.TreeItem {
@@ -125,7 +134,7 @@ class SessionItem extends vscode.TreeItem {
     super(session.name, vscode.TreeItemCollapsibleState.None);
     this.session = session;
     this.contextValue = "agentSession";
-    this.description = `${session.state} · ${formatAge(session.startedAt)}`;
+    this.description = `${session.state} · ${formatAge(session.updatedAt || session.startedAt)}`;
     this.tooltip = sessionTooltip(session);
     this.iconPath = new vscode.ThemeIcon(iconForState(session.state));
     this.command = {
@@ -164,7 +173,7 @@ function fetchSessions() {
       args,
       {
         cwd: workspaceRoot(),
-        env: process.env,
+        env: commandEnv(),
         maxBuffer: 20 * 1024 * 1024,
         timeout: 20000
       },
@@ -176,7 +185,15 @@ function fetchSessions() {
 
         try {
           const parsed = JSON.parse(stdout || "[]");
-          resolve(Array.isArray(parsed) ? parsed : []);
+          if (Array.isArray(parsed)) {
+            resolve(parsed);
+            return;
+          }
+          if (parsed && Array.isArray(parsed.sessions)) {
+            resolve(parsed.sessions);
+            return;
+          }
+          resolve([]);
         } catch (parseError) {
           reject(new Error(`Could not parse agent JSON: ${parseError.message}`));
         }
@@ -221,8 +238,8 @@ function normalizeSession(raw) {
     prompt: clean(raw.prompt || ""),
     state,
     cwd,
-    startedAt: Number(raw.startedAt || raw.createdAt || 0),
-    updatedAt: Number(raw.updatedAt || raw.lastActivityAt || 0)
+    startedAt: toMillis(raw.startedAt || raw.createdAt || 0),
+    updatedAt: toMillis(raw.updatedAt || raw.lastActivityAt || 0)
   };
 }
 
@@ -261,7 +278,8 @@ function stateRank(state) {
 function openAgentView() {
   const terminal = vscode.window.createTerminal({
     name: "Claude Agent View",
-    cwd: workspaceRoot()
+    cwd: workspaceRoot(),
+    env: terminalEnv()
   });
   terminal.show();
   terminal.sendText(`${quoteShell(config().get("claudePath", "claude"))} agents`);
@@ -279,7 +297,8 @@ function resumeSession(item) {
   const command = `${quoteShell(config().get("claudePath", "claude"))} --resume ${quoteShell(session.sessionId)} ${resumeArgs}`.trim();
   const terminal = vscode.window.createTerminal({
     name: `Agent ${session.id}`,
-    cwd
+    cwd,
+    env: terminalEnv()
   });
   terminal.show();
   terminal.sendText(command);
@@ -317,6 +336,33 @@ function sessionTooltip(session) {
 
 function config() {
   return vscode.workspace.getConfiguration("localAgentMonitor");
+}
+
+function commandEnv() {
+  return {
+    ...process.env,
+    PATH: commandPath()
+  };
+}
+
+function terminalEnv() {
+  return {
+    PATH: commandPath()
+  };
+}
+
+function commandPath() {
+  const existingPath = process.env.PATH || process.env.Path || "";
+  const localPaths = process.platform === "win32"
+    ? []
+    : [
+        path.join(os.homedir(), ".local/bin"),
+        path.join(os.homedir(), "bin"),
+        "/opt/homebrew/bin",
+        "/usr/local/bin"
+      ];
+
+  return localPaths.concat(existingPath).filter(Boolean).join(path.delimiter);
 }
 
 function workspaceRoot() {
@@ -386,6 +432,14 @@ function compareScore(left, right) {
     }
   }
   return 0;
+}
+
+function toMillis(value) {
+  const number = Number(value || 0);
+  if (!number) {
+    return 0;
+  }
+  return number < 100000000000 ? number * 1000 : number;
 }
 
 function formatAge(ms) {

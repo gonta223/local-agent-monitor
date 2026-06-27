@@ -2,7 +2,7 @@
   "name": "local-agent-monitor",
   "displayName": "Local Agent Monitor",
   "description": "A local-first VS Code sidebar for Claude Code background agent sessions.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "agentcontrol-labs",
   "license": "MIT",
   "repository": {
@@ -13,6 +13,10 @@
     "url": "https://github.com/gonta223/local-agent-monitor/issues"
   },
   "homepage": "https://github.com/gonta223/local-agent-monitor#readme",
+  "scripts": {
+    "check": "node --check extension.js && node -e \"require('./package.json')\"",
+    "package": "npx --yes @vscode/vsce package --no-dependencies"
+  },
   "engines": {
     "vscode": "^1.90.0"
   },
